@@ -191,14 +191,13 @@ export default function QueueProgress({
             <div className="space-y-0.5">
               <span className="block text-[10px] font-bold text-slate-300 uppercase tracking-wider">Mô phỏng (Demo Mode)</span>
               <span className="block text-[9px] text-slate-500 leading-none">
-                {hasApiKey ? "Tắt để gửi yêu cầu thật đến Gemini API." : "Bắt buộc (Thiếu GEMINI_API_KEY)."}
+                {hasApiKey ? "Tắt để gửi yêu cầu thật đến Gemini API." : "Có thể tắt để chạy API thật (nếu có key sẵn)."}
               </span>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
               <input
                 type="checkbox"
                 checked={config.simulate}
-                disabled={!hasApiKey}
                 onChange={(e) => onConfigChange({ ...config, simulate: e.target.checked })}
                 className="sr-only peer"
               />
