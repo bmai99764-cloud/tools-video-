@@ -283,8 +283,14 @@ export default function App() {
       {/* Header Section */}
       <header className="h-16 border-b border-slate-850 bg-[#1E293B] flex items-center justify-between px-6 shrink-0 z-40 shadow-sm">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-indigo-600 rounded flex items-center justify-center font-bold text-white shadow-md shadow-indigo-600/20">
-            <Video className="w-4.5 h-4.5" />
+          <div className="w-8 h-8 bg-[#52801C] rounded flex items-center justify-center shadow-md shadow-[#52801C]/20 overflow-hidden shrink-0">
+            <svg viewBox="0 0 8 8" className="w-6 h-6 text-black fill-current">
+              <rect x="1" y="1" width="2" height="2" />
+              <rect x="5" y="1" width="2" height="2" />
+              <rect x="3" y="3" width="2" height="2" />
+              <rect x="2" y="4" width="4" height="2" />
+              <rect x="3" y="5" width="2" height="1" fill="#52801C" />
+            </svg>
           </div>
           <div>
             <h1 className="text-sm font-bold tracking-tight flex items-center gap-2">
