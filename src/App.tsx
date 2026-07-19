@@ -19,33 +19,34 @@ export default function App() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [hasApiKey, setHasApiKey] = useState(false);
   const [serverStatus, setServerStatus] = useState<'checking' | 'connected' | 'error'>('checking');
-  
+
+  const checkStatus = async () => {
+    try {
+      const res = await fetch('/api/status');
+      if (res.ok) {
+        const data = await res.json();
+        setHasApiKey(data.hasApiKey);
+        setServerStatus('connected');
+        // If we have an API key, turn off simulation by default so they use the real deal
+        // Otherwise, force simulation mode
+        setConfig(prev => ({
+          ...prev,
+          simulate: !data.hasApiKey
+        }));
+      } else {
+        setServerStatus('error');
+      }
+    } catch (err) {
+      console.error("Lỗi kết nối server:", err);
+      setServerStatus('error');
+    }
+  };
+
   // Rate limit timestamps history (holds start times of jobs run in the last 60 seconds)
   const [rateLimitHistory, setRateLimitHistory] = useState<number[]>([]);
 
   // 1. Fetch backend API key presence on boot
   useEffect(() => {
-    const checkStatus = async () => {
-      try {
-        const res = await fetch('/api/status');
-        if (res.ok) {
-          const data = await res.json();
-          setHasApiKey(data.hasApiKey);
-          setServerStatus('connected');
-          // If we have an API key, turn off simulation by default so they use the real deal
-          // Otherwise, force simulation mode
-          setConfig(prev => ({
-            ...prev,
-            simulate: !data.hasApiKey
-          }));
-        } else {
-          setServerStatus('error');
-        }
-      } catch (err) {
-        console.error("Lỗi kết nối server:", err);
-        setServerStatus('error');
-      }
-    };
     checkStatus();
   }, []);
 
@@ -380,7 +381,7 @@ export default function App() {
               )}
               {serverStatus === 'connected' && (
                 <span className="text-emerald-400 bg-emerald-950/20 px-2 py-0.5 rounded border border-emerald-900/10 font-bold text-[10px] uppercase">
-                  Hoạt động
+                  Hoạt động (Đã nhận diện API)
                 </span>
               )}
               {serverStatus === 'error' && (

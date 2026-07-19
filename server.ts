@@ -13,10 +13,10 @@ const PORT = 3000;
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
 
-const apiKey = process.env.GEMINI_API_KEY;
+const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
 let ai: GoogleGenAI | null = null;
 
-if (apiKey && apiKey !== "MY_GEMINI_API_KEY") {
+if (apiKey && apiKey !== "MY_GEMINI_API_KEY" && apiKey !== "MY_GOOGLE_API_KEY") {
   ai = new GoogleGenAI({
     apiKey: apiKey,
     httpOptions: {
@@ -27,6 +27,33 @@ if (apiKey && apiKey !== "MY_GEMINI_API_KEY") {
   });
 }
 
+// Helper to get Gemini client based on optional request header or environment variables
+function getAIClient(req: express.Request): { ai: GoogleGenAI | null; key: string | null } {
+  let key = req.headers['x-gemini-api-key'] as string;
+  
+  if (!key || key === "null" || key === "undefined" || key.trim() === "") {
+    key = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || "";
+  }
+  
+  if (key && key !== "MY_GEMINI_API_KEY" && key !== "MY_GOOGLE_API_KEY" && key.trim() !== "") {
+    try {
+      const aiInstance = new GoogleGenAI({
+        apiKey: key.trim(),
+        httpOptions: {
+          headers: {
+            'User-Agent': 'aistudio-build',
+          }
+        }
+      });
+      return { ai: aiInstance, key: key.trim() };
+    } catch (e) {
+      console.error("Failed to initialize GoogleGenAI with key:", e);
+    }
+  }
+  
+  return { ai: ai, key: (apiKey && apiKey !== "MY_GEMINI_API_KEY" && apiKey !== "MY_GOOGLE_API_KEY") ? apiKey : null };
+}
+
 // In-memory store for active mock operations and their progress
 const mockOperations = new Map<string, { start: number; duration: number; videoIndex: number }>();
 
@@ -34,9 +61,10 @@ const mockOperations = new Map<string, { start: number; duration: number; videoI
 
 // 1. Check system status & API key configuration
 app.get("/api/status", (req, res) => {
+  const { key } = getAIClient(req);
   res.json({
     status: "ok",
-    hasApiKey: !!apiKey && apiKey !== "MY_GEMINI_API_KEY",
+    hasApiKey: !!key,
     model: process.env.GEMINI_MODEL || "gemini-3.5-flash"
   });
 });
@@ -57,7 +85,8 @@ app.post("/api/generate-video", async (req, res) => {
       simulate
     } = req.body;
 
-    const useSimulation = simulate || !ai;
+    const { ai: reqAi } = getAIClient(req);
+    const useSimulation = simulate || !reqAi;
 
     if (useSimulation) {
       // Simulate an operation name
@@ -66,7 +95,7 @@ app.post("/api/generate-video", async (req, res) => {
       
       // Store mock operation with dynamic duration between 15-25 seconds for nice demo feel
       mockOperations.set(operationName, {
-        start: Date.now(),
+        get start() { return Date.now(); },
         duration: 15000 + Math.random() * 10000,
         videoIndex: Math.floor(Math.random() * 5)
       });
@@ -113,7 +142,11 @@ app.post("/api/generate-video", async (req, res) => {
       };
     }
 
-    const operation = await ai.models.generateVideos(videoParams);
+    if (!reqAi) {
+      return res.status(500).json({ error: "Gemini API client not initialized" });
+    }
+
+    const operation = await reqAi.models.generateVideos(videoParams);
     return res.json({ operationName: operation.name, simulated: false });
 
   } catch (error: any) {
@@ -167,14 +200,15 @@ app.post("/api/video-status", async (req, res) => {
       });
     }
 
-    if (!ai) {
+    const { ai: reqAi } = getAIClient(req);
+    if (!reqAi) {
       return res.status(500).json({ error: "Gemini API client not initialized" });
     }
 
     // Real API status check
     const op = new GenerateVideosOperation();
     op.name = operationName;
-    const updated = await ai.operations.getVideosOperation({ operation: op });
+    const updated = await reqAi.operations.getVideosOperation({ operation: op });
 
     return res.json({
       done: updated.done,
@@ -192,7 +226,7 @@ app.post("/api/video-status", async (req, res) => {
 // 4. View video stream (proxied inline play back)
 app.get("/api/video/view", async (req, res) => {
   try {
-    const { operationName, uri } = req.query;
+    const { operationName, uri, clientKey } = req.query;
     if (!operationName && !uri) {
       return res.status(400).send("operationName or uri is required");
     }
@@ -211,11 +245,13 @@ app.get("/api/video/view", async (req, res) => {
       return res.redirect(videoUrl);
     }
 
+    const { ai: reqAi, key: reqApiKey } = getAIClient(req);
     let videoUri = uri as string;
-    if (operationName && ai) {
+    
+    if (operationName && reqAi) {
       const op = new GenerateVideosOperation();
       op.name = operationName as string;
-      const updated = await ai.operations.getVideosOperation({ operation: op });
+      const updated = await reqAi.operations.getVideosOperation({ operation: op });
       videoUri = updated.response?.generatedVideos?.[0]?.video?.uri || "";
     }
 
@@ -225,7 +261,7 @@ app.get("/api/video/view", async (req, res) => {
 
     // Stream from Google using API key
     const videoRes = await fetch(videoUri, {
-      headers: { 'x-goog-api-key': apiKey || "" },
+      headers: { 'x-goog-api-key': reqApiKey || "" },
     });
 
     res.setHeader('Content-Type', 'video/mp4');
@@ -280,11 +316,13 @@ app.get("/api/video/download", async (req, res) => {
       return res.redirect(videoUrl);
     }
 
+    const { ai: reqAi, key: reqApiKey } = getAIClient(req);
     let videoUri = uri as string;
-    if (operationName && ai) {
+    
+    if (operationName && reqAi) {
       const op = new GenerateVideosOperation();
       op.name = operationName as string;
-      const updated = await ai.operations.getVideosOperation({ operation: op });
+      const updated = await reqAi.operations.getVideosOperation({ operation: op });
       videoUri = updated.response?.generatedVideos?.[0]?.video?.uri || "";
     }
 
@@ -293,7 +331,7 @@ app.get("/api/video/download", async (req, res) => {
     }
 
     const videoRes = await fetch(videoUri, {
-      headers: { 'x-goog-api-key': apiKey || "" },
+      headers: { 'x-goog-api-key': reqApiKey || "" },
     });
 
     res.setHeader('Content-Type', 'video/mp4');
