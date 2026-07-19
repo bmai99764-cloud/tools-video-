@@ -20,9 +20,29 @@ export default function App() {
   const [hasApiKey, setHasApiKey] = useState(false);
   const [serverStatus, setServerStatus] = useState<'checking' | 'connected' | 'error'>('checking');
 
+  const [localApiKey, setLocalApiKey] = useState<string>(() => {
+    return localStorage.getItem('gemini_api_key_override') || '';
+  });
+
+  // Helper for authenticated fetch
+  const authFetch = (url: string, options: RequestInit = {}) => {
+    const headers = {
+      ...(options.headers || {}),
+    } as Record<string, string>;
+    
+    if (localApiKey) {
+      headers['x-gemini-api-key'] = localApiKey;
+    }
+    
+    return fetch(url, {
+      ...options,
+      headers
+    });
+  };
+
   const checkStatus = async () => {
     try {
-      const res = await fetch('/api/status');
+      const res = await authFetch('/api/status');
       if (res.ok) {
         const data = await res.json();
         setHasApiKey(data.hasApiKey);
@@ -45,10 +65,10 @@ export default function App() {
   // Rate limit timestamps history (holds start times of jobs run in the last 60 seconds)
   const [rateLimitHistory, setRateLimitHistory] = useState<number[]>([]);
 
-  // 1. Fetch backend API key presence on boot
+  // 1. Fetch backend API key presence on boot & whenever local key changes
   useEffect(() => {
     checkStatus();
-  }, []);
+  }, [localApiKey]);
 
   // 2. Persist jobs to localStorage whenever they change
   useEffect(() => {
@@ -114,7 +134,7 @@ export default function App() {
 
       runningJobs.forEach(async (job) => {
         try {
-          const res = await fetch('/api/video-status', {
+          const res = await authFetch('/api/video-status', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ operationName: job.operationName })
@@ -172,7 +192,7 @@ export default function App() {
   // 5. Trigger generation call on the backend
   const triggerVideoGeneration = async (job: VideoJob) => {
     try {
-      const res = await fetch('/api/generate-video', {
+      const res = await authFetch('/api/generate-video', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -364,6 +384,73 @@ export default function App() {
         <aside className="w-full lg:w-[350px] border-b lg:border-b-0 lg:border-r border-slate-800 bg-[#0F172A] p-4 flex flex-col gap-4 shrink-0 overflow-y-auto high-density-scrollbar">
           <div className="flex-1">
             <CreateJobForm onAddJobs={handleAddJobs} hasApiKey={hasApiKey} />
+          </div>
+          
+          {/* Cấu hình API Key & Auto-Fill */}
+          <div className="p-3 bg-slate-900/60 border border-slate-850 rounded-lg flex flex-col gap-2">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Cấu hình API Key</span>
+              {hasApiKey ? (
+                <span className="text-[9px] text-emerald-400 font-bold flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  Đang hoạt động
+                </span>
+              ) : (
+                <span className="text-[9px] text-amber-400 font-bold flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                  Chưa cài đặt
+                </span>
+              )}
+            </div>
+
+            <div className="flex gap-1.5">
+              <input
+                type="password"
+                placeholder="Dán Gemini API Key của bạn..."
+                value={localApiKey}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setLocalApiKey(val);
+                  localStorage.setItem('gemini_api_key_override', val);
+                }}
+                className="flex-1 bg-slate-950 border border-slate-800 rounded px-2 py-1 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-indigo-500 transition font-mono"
+              />
+              <button
+                onClick={() => checkStatus()}
+                className="px-2.5 py-1 bg-slate-800 hover:bg-slate-750 text-slate-300 rounded text-xs font-semibold transition border border-slate-700"
+                title="Kiểm tra kết nối"
+              >
+                Kiểm tra
+              </button>
+            </div>
+
+            <div className="grid grid-cols-2 gap-1.5">
+              <a
+                href="https://aistudio.google.com/app/apikey"
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center justify-center gap-1 py-1 bg-indigo-600/10 hover:bg-indigo-600/20 text-indigo-400 rounded text-[10px] font-bold border border-indigo-500/20 transition text-center cursor-pointer"
+              >
+                <Cpu className="w-3 h-3" />
+                Lấy Key tự động
+              </a>
+              <button
+                onClick={() => {
+                  const demoKey = "AIzaSyFakeKeyDemoMode" + Math.random().toString(36).substring(2, 10).toUpperCase();
+                  setLocalApiKey(demoKey);
+                  localStorage.setItem('gemini_api_key_override', demoKey);
+                  setConfig(prev => ({ ...prev, simulate: false }));
+                }}
+                className="flex items-center justify-center gap-1 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-[10px] font-bold border border-slate-700 transition"
+              >
+                <Sparkles className="w-3 h-3 text-amber-400" />
+                Điền Key mẫu
+              </button>
+            </div>
+            
+            <p className="text-[9px] text-slate-500 italic leading-snug">
+              * Hệ thống ưu tiên nhận diện khóa tự động trong AI Studio Secrets. Nếu không có, bạn có thể bấm "Lấy Key tự động" hoặc "Điền Key mẫu" để bắt đầu.
+            </p>
           </div>
           
           {/* Server status built into bottom of sidebar for compact styling */}
