@@ -176,11 +176,11 @@ app.post("/api/video-status", async (req, res) => {
 
       // Sample videos for mock mode
       const mockVideos = [
-        "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
-        "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
-        "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4",
-        "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4",
-        "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4"
+        "https://vjs.zencdn.net/v/oceans.mp4",
+        "https://www.w3schools.com/html/mov_bbb.mp4",
+        "https://www.w3schools.com/html/movie.mp4",
+        "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
+        "https://vjs.zencdn.net/v/oceans.mp4"
       ];
       const videoUrl = mockVideos[state.videoIndex];
 
@@ -235,11 +235,11 @@ app.get("/api/video/view", async (req, res) => {
     if (operationName && (operationName as string).includes("mock-")) {
       const state = mockOperations.get(operationName as string);
       const mockVideos = [
-        "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
-        "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
-        "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4",
-        "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4",
-        "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4"
+        "https://vjs.zencdn.net/v/oceans.mp4",
+        "https://www.w3schools.com/html/mov_bbb.mp4",
+        "https://www.w3schools.com/html/movie.mp4",
+        "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
+        "https://vjs.zencdn.net/v/oceans.mp4"
       ];
       const videoUrl = state ? mockVideos[state.videoIndex] : mockVideos[0];
       return res.redirect(videoUrl);
@@ -306,11 +306,11 @@ app.get("/api/video/download", async (req, res) => {
     if (operationName && (operationName as string).includes("mock-")) {
       const state = mockOperations.get(operationName as string);
       const mockVideos = [
-        "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
-        "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
-        "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4",
-        "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4",
-        "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4"
+        "https://vjs.zencdn.net/v/oceans.mp4",
+        "https://www.w3schools.com/html/mov_bbb.mp4",
+        "https://www.w3schools.com/html/movie.mp4",
+        "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
+        "https://vjs.zencdn.net/v/oceans.mp4"
       ];
       const videoUrl = state ? mockVideos[state.videoIndex] : mockVideos[0];
       return res.redirect(videoUrl);
