@@ -85,8 +85,9 @@ app.post("/api/generate-video", async (req, res) => {
       simulate
     } = req.body;
 
-    const { ai: reqAi } = getAIClient(req);
-    const useSimulation = simulate || !reqAi;
+    const { ai: reqAi, key: reqApiKey } = getAIClient(req);
+    const isFakeKey = reqApiKey && (reqApiKey.includes("FakeKey") || reqApiKey.startsWith("AIzaSyFake"));
+    const useSimulation = simulate || !reqAi || isFakeKey;
 
     if (useSimulation) {
       // Simulate an operation name

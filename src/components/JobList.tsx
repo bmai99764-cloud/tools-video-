@@ -185,9 +185,9 @@ export default function JobList({ jobs, onRetryJob, onDeleteJob }: JobListProps)
 
                     {/* Completion or Error Messages */}
                     {job.status === 'failed' && job.error && (
-                      <span className="text-[10px] font-medium text-red-400 bg-red-955/20 border border-red-900/20 rounded px-2 py-0.5 max-w-[200px] truncate" title={job.error}>
+                      <div className="text-[10px] font-medium text-red-400 bg-red-955/20 border border-red-900/20 rounded px-2 py-1 max-w-[280px] break-words leading-normal" title={job.error}>
                         {job.error}
-                      </span>
+                      </div>
                     )}
 
                     {/* Actions buttons */}
