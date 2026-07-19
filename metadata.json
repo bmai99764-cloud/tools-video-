@@ -1,0 +1,6 @@
+{
+  "name": "Tools Video",
+  "description": "Hệ thống tạo video hàng loạt kết nối với Google Gemini AI (Veo 3.1) với quản lý hàng đợi, giới hạn tốc độ, và xem trực tuyến. Developed by bachmai.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
