@@ -95,7 +95,7 @@ app.post("/api/generate-video", async (req, res) => {
       
       // Store mock operation with dynamic duration between 15-25 seconds for nice demo feel
       mockOperations.set(operationName, {
-        get start() { return Date.now(); },
+        start: Date.now(),
         duration: 15000 + Math.random() * 10000,
         videoIndex: Math.floor(Math.random() * 5)
       });

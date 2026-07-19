@@ -271,14 +271,23 @@ export default function QueueProgress({
               </div>
             )}
 
-            {/* API key missing warning */}
-            {!hasApiKey && (
+            {/* API key & simulation warnings */}
+            {config.simulate ? (
               <div className="bg-blue-950/20 border border-blue-900/30 rounded p-2 flex items-start gap-2 text-blue-400 text-[9px] leading-relaxed">
                 <ShieldAlert className="w-3.5 h-3.5 flex-shrink-0" />
                 <p>
-                  <strong>Chế độ mô phỏng kích hoạt:</strong> Chưa thiết lập <code>GEMINI_API_KEY</code>. Hệ thống đang giả lập quá trình tạo video từ Veo với các video mẫu trực quan.
+                  <strong>Chế độ mô phỏng đang bật:</strong> {!hasApiKey ? "Chưa thiết lập GEMINI_API_KEY. " : ""}Hệ thống đang giả lập quá trình tạo video từ Veo với các video mẫu trực quan.
                 </p>
               </div>
+            ) : (
+              !hasApiKey && (
+                <div className="bg-red-950/20 border border-red-900/30 rounded p-2 flex items-start gap-2 text-red-400 text-[9px] leading-relaxed">
+                  <ShieldAlert className="w-3.5 h-3.5 flex-shrink-0" />
+                  <p>
+                    <strong>Cảnh báo:</strong> Bạn đã tắt chế độ mô phỏng nhưng chưa thiết lập <code>GEMINI_API_KEY</code>. Hãy thêm API Key trong mục Secrets của AI Studio để chạy API thật.
+                  </p>
+                </div>
+              )
             )}
           </div>
         </div>
