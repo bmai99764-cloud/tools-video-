@@ -13,7 +13,7 @@ export default function App() {
 
   const [config, setConfig] = useState<QueueConfig>({
     concurrency: 4,
-    simulate: true // default to simulation, we will update once we check status
+    simulate: false // default to false (not turning on simulation mode by default)
   });
 
   const [isProcessing, setIsProcessing] = useState(false);
@@ -47,11 +47,10 @@ export default function App() {
         const data = await res.json();
         setHasApiKey(data.hasApiKey);
         setServerStatus('connected');
-        // If we have an API key, turn off simulation by default so they use the real deal
-        // Otherwise, force simulation mode
+        // Keep simulation disabled by default as requested by the user
         setConfig(prev => ({
           ...prev,
-          simulate: !data.hasApiKey
+          simulate: false
         }));
       } else {
         setServerStatus('error');
